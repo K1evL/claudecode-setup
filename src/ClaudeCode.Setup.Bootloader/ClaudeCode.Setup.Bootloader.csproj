@@ -1,0 +1,60 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" />
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <AssemblyName>ClaudeCode-Setup</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 将 app.ico 放到 src/assets/ 目录以自定义图标，没有则使用默认图标 -->
+    <ApplicationIcon Condition="Exists('..\..\src\assets\app.ico')">..\..\src\assets\app.ico</ApplicationIcon>
+    <OutputPath>$(MSBuildProjectDirectory)\..\..\build\out\</OutputPath>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+
+  <!-- 内嵌脚本和模块资源 -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\src\scripts\install.ps1">
+      <LogicalName>install.ps1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\assets\banner.txt">
+      <LogicalName>banner.txt</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\core\Config.psm1">
+      <LogicalName>core.Config.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\core\Logger.psm1">
+      <LogicalName>core.Logger.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\core\Downloader.psm1">
+      <LogicalName>core.Downloader.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\core\Progress.psm1">
+      <LogicalName>core.Progress.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\modules\SystemCheck.psm1">
+      <LogicalName>modules.SystemCheck.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\modules\NodeInstaller.psm1">
+      <LogicalName>modules.NodeInstaller.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\modules\NpmConfig.psm1">
+      <LogicalName>modules.NpmConfig.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\modules\CcSwitchInstaller.psm1">
+      <LogicalName>modules.CcSwitchInstaller.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\modules\EnvironmentManager.psm1">
+      <LogicalName>modules.EnvironmentManager.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\modules\Uninstaller.psm1">
+      <LogicalName>modules.Uninstaller.psm1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\modules\Validator.psm1">
+      <LogicalName>modules.Validator.psm1</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

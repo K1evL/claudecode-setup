@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+*.exe
+*.pdb
+*.dll
+*.user
+*.suo
+*.vs/
+
+# PowerShell
+*.ps1xml
+*.psd1
+
+# Build output
+build/out/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log

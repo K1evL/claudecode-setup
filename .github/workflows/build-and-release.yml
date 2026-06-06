@@ -1,0 +1,106 @@
+# build-and-release.yml — GitHub Actions 自动构建与发布
+# 触发条件：push tag v*.*.* 或 push main
+
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build Bootloader
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build
+        shell: pwsh
+        run: .\build\build.ps1 -Release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClaudeCode-Setup
+          path: build\out\ClaudeCode-Setup.exe
+
+  test:
+    name: Run Pester Tests
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pester
+        run: Install-Module Pester -Force -SkipPublisherCheck
+
+      - name: Run Tests
+        shell: pwsh
+        run: |
+          Invoke-Pester src\tests\ -Output Detailed -PassThru
+
+  release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    needs: [build, test]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ClaudeCode-Setup
+          path: release
+
+      - name: Sign Executable
+        if: ${{ secrets.CODE_SIGNING_CERT != '' }}
+        shell: pwsh
+        run: |
+          # 解码证书
+          $certBytes = [Convert]::FromBase64String("${{ secrets.CODE_SIGNING_CERT }}")
+          $certPath = Join-Path $env:RUNNER_TEMP "cert.pfx"
+          [IO.File]::WriteAllBytes($certPath, $certBytes)
+
+          # 查找 signtool
+          $signtool = Resolve-Path "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" |
+            Select-Object -Last 1 -ExpandProperty Path
+          if (-not $signtool) { throw "signtool not found" }
+
+          # 签名
+          & $signtool sign `
+            /fd SHA256 /f $certPath `
+            /p "${{ secrets.CODE_SIGNING_PASSWORD }}" `
+            /tr http://timestamp.digicert.com /td SHA256 `
+            release\ClaudeCode-Setup.exe
+
+      - name: Generate Release Notes
+        shell: pwsh
+        run: |
+          $changelog = Get-Content CHANGELOG.md -Raw
+          $tag = "${{ github.ref_name }}"
+          # 提取当前版本的变更日志
+          $pattern = "## $tag[\s\S]*?(?=## v|\z)"
+          if ($changelog -match $pattern) {
+            $notes = $Matches[0]
+            $notes | Out-File -FilePath $env:RUNNER_TEMP\release_notes.md -Encoding UTF8
+          }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/ClaudeCode-Setup.exe
+          body_path: ${{ runner.temp }}\release_notes.md
+          draft: false
+          prerelease: false
